@@ -1,0 +1,20 @@
+{
+  "name": "prithvi-js-sdk",
+  "version": "1.0.0",
+  "description": "A Node.js client for the Prithvi database server.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/psidh/prithvi-js-sdk.git"
+  },
+  "keywords": [
+    "prithvi",
+    "database",
+    "client"
+  ],
+  "author": "Philkhana Sidharth philkhanasidharth14@gmail.com",
+  "license": "MIT"
+}

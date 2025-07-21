@@ -1,0 +1,10 @@
+# Logs
+logs
+*.log
+
+# Testing files
+/tests
+
+# Other
+.DS_Store
+.vscode/
