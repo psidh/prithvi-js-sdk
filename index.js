@@ -1,12 +1,13 @@
-const net = require('net');
+const net = require("net");
 
 class PrithviClient {
-  constructor(host = '127.0.0.1', port = 1902) {
+  constructor(host = "127.0.0.1", port = 1902) {
     this.host = host;
     this.port = port;
     this.client = null;
-    this.buffer = '';
+    this.buffer = "";
     this.callbacks = [];
+    this.authToken = null;
   }
 
   connect() {
@@ -14,10 +15,10 @@ class PrithviClient {
       this.client = net.createConnection(
         { host: this.host, port: this.port },
         () => {
-          this.client.setEncoding('utf8');
-          this.client.on('data', this._handleData.bind(this));
-          this.client.on('error', this._handleError.bind(this));
-          this.client.on('close', this._handleClose.bind(this));
+          this.client.setEncoding("utf8");
+          this.client.on("data", this._handleData.bind(this));
+          this.client.on("error", this._handleError.bind(this));
+          this.client.on("close", this._handleClose.bind(this));
 
           resolve();
         }
@@ -29,7 +30,7 @@ class PrithviClient {
     this.buffer += data;
 
     let index;
-    while ((index = this.buffer.indexOf('\n')) >= 0) {
+    while ((index = this.buffer.indexOf("\n")) >= 0) {
       const line = this.buffer.slice(0, index).trim();
       this.buffer = this.buffer.slice(index + 1);
 
@@ -39,27 +40,27 @@ class PrithviClient {
   }
 
   _handleError(err) {
-    console.error('Prithvi client error:', err.message);
+    console.error("Prithvi client error:", err.message);
   }
 
   _handleClose() {
-    console.warn('Prithvi connection closed. Attempting reconnect...');
+    console.warn("Prithvi connection closed. Attempting reconnect...");
     this._attemptReconnect();
   }
 
   _attemptReconnect(retries = 5) {
     if (retries == 0) {
-      console.log('Prithvi Connection close after 5 attempts to connect.');
+      console.log("Prithvi Connection close after 5 attempts to connect.");
       return;
     }
 
     setTimeout(() => {
       this.connect()
         .then(() => {
-          console.log('Reconnected to the Prithvi Server');
+          console.log("Reconnected to the Prithvi Server");
         })
         .catch(() => {
-          console.warn('Reconnect Failed. Retrying...');
+          console.warn("Reconnect Failed. Retrying...");
           this._attemptReconnect(retries - 1);
         });
     }, 500);
@@ -70,11 +71,11 @@ class PrithviClient {
       const trySend = (attempt) => {
         if (!this.client || this.client.destroyed) {
           this.client.end();
-          return reject(new Error('Client not connected'));
+          return reject(new Error("Client not connected"));
         }
 
         try {
-          this.client.write(cmd + '\n');
+          this.client.write(cmd + "\n");
           this.callbacks.push(resolve);
         } catch (err) {
           if (attempt < retries) {
@@ -170,6 +171,31 @@ class PrithviClient {
     if (this.client && !this.client.destroyed()) {
       this.client.end();
     }
+  }
+
+  async auth(username) {
+    const response = this._sendCommand(`AUTH ${username}`);
+    if (response.startsWith("TOKEN ")) {
+      this.authToken = response.split(" ")[0];
+      return `Authentication successful. Token stored.`;
+    } else {
+      throw new Error(`Unexpected response: ${response}`);
+    }
+  }
+
+  async token(hash = null) {
+    const tokenToUse = hash || this.authToken;
+    if (!tokenToUse) {
+      throw new Error(
+        "No token provided or stored. Run auth() first or pass token manually."
+      );
+    }
+
+    return this._sendCommand(`TOKEN ${tokenToUse}`);
+  }
+
+  getStoredToken() {
+    return this.authToken;
   }
 }
 

@@ -1,31 +1,38 @@
-# PrithviClient: JavaScript SDK for Prithvi
+# Prithvi-JS-SDK: JavaScript SDK for Prithvi
 
-A simple and easy-to-use Node.js client for interacting with the Prithvi database server. This SDK manages the TCP connection, command sending, and response handling, including automatic reconnection.
+A simple, fast, and easy-to-use Node.js client for interacting with the [Prithvi](https://github.com/psidh/prithvi) in-memory database server over raw TCP. This SDK handles connection management, command execution, and automatic reconnection with optional authentication support.
 
 ---
 
-## Usage
+## 🚀 Installation
 
-First, import and create an instance of the `PrithviClient`. Then, connect to the server.
+```bash
+npm i prithvi-js-sdk
+```
+
+---
+
+## 🛠️ Usage
 
 ```javascript
-const PrithviClient = require('prithvi-client');
+const PrithviClient = require("prithvi-js-sdk");
 
-const client = new PrithviClient('127.0.0.1', 1902);
+const client = new PrithviClient("127.0.0.1", 1902);
 
 async function main() {
   try {
     await client.connect();
-    console.log('Successfully connected to the Prithvi server.');
+    console.log("Connected to Prithvi.");
 
-    // Now you can use the client to send commands
-    const setResult = await client.set('mykey', 'myvalue');
-    console.log('SET response:', setResult);
+    // Optional: Authenticate
+    await client.auth("your-username");
+    await client.token(); // Reuses stored token
 
-    const getResult = await client.get('mykey');
-    console.log('GET response:', getResult);
+    await client.set("mykey", "myvalue");
+    const value = await client.get("mykey");
+    console.log("GET response:", value);
   } catch (error) {
-    console.error('Failed to connect or send command:', error.message);
+    console.error("Error:", error.message);
   } finally {
     client.close();
   }
@@ -34,73 +41,141 @@ async function main() {
 main();
 ```
 
-## API Reference
+---
 
-All commands are asynchronous and return a `Promise` that resolves with the server's response.
+## 📚 API Reference
 
-### Connection
+### 🔌 Connection
 
-**`new PrithviClient(host, port)`**
+- **`new PrithviClient(host, port)`**
+  Initializes the client. Defaults: `host = '127.0.0.1'`, `port = 1902`.
 
-- Creates a new client instance.
-- `host`: The server IP address (default: `'127.0.0.1'`).
-- `port`: The server port (default: `1902`).
+- **`connect()`**
+  Establishes TCP connection to the Prithvi server.
 
-**`connect()`**
-
-- Establishes a connection to the Prithvi server.
-
-**`close()`**
-
-- Closes the connection to the server.
-
-### String Commands
-
-- **`set(key, value, expiry)`**: Sets a key-value pair. `expiry` is an optional time in seconds.
-- **`get(key)`**: Retrieves the value for a given key.
-
-### Key Management
-
-- **`del(key)`**: Deletes a key.
-- **`exists(key)`**: Checks if a key exists.
-- **`keys()`**: Returns all keys.
-
-### Set Commands
-
-- **`sadd(key, value)`**: Adds a value to a set.
-- **`smembers(key)`**: Returns all members of a set.
-- **`srem(key, value)`**: Removes a value from a set.
-
-### List Commands
-
-- **`lpush(key, value)`**: Prepends a value to a list.
-- **`rpush(key, value)`**: Appends a value to a list.
-- **`lpop(key)`**: Removes and returns the first element of a list.
-- **`rpop(key)`**: Removes and returns the last element of a list.
-- **`getList(key)`**: Retrieves the entire list.
-
-### Server Commands
-
-- **`flush(confirm)`**: Deletes all keys from the database. Set `confirm` to `true`.
-- **`save()`**: Saves the current database state to disk.
-- **`load()`**: Loads the database from a file.
-- **`quit()`**: Closes the connection from the server-side.
-- **`help()`**: Returns a list of available commands from the server.
+- **`close()`**
+  Closes the client connection.
 
 ---
 
-## Error Handling and Reconnection
+### 🔐 Authentication
 
-The client is designed to be resilient. If the connection to the Prithvi server is lost, the client will automatically try to reconnect up to 5 times with a short delay between attempts. Error messages will be logged to the console during this process.
+- **`auth(username)`**
+  Initiates authentication. Returns and stores a `TOKEN <hash>` internally.
+
+- **`token(hash?)`**
+  Sends the stored token (from `auth`) or manually passed token to authenticate session.
+
+- **`getStoredToken()`**
+  Returns the currently stored token hash.
 
 ---
 
-## Contributing
+### 🔑 Key Commands
 
-Contributions are welcome. Please open an issue or submit a pull request if you have suggestions for improvement.
+- **`set(key, value, expiry?)`**
+  Sets a key with optional expiry (in seconds).
+
+- **`get(key)`**
+  Retrieves value for a key.
+
+- **`del(key)`**
+  Deletes a key.
+
+- **`exists(key)`**
+  Checks existence of a key.
+
+- **`keys()`**
+  Returns list of all keys.
 
 ---
 
-## License
+### 📚 Set Commands
+
+- **`sadd(key, value)`**
+  Adds a value to a set.
+
+- **`smembers(key)`**
+  Returns all members of a set.
+
+- **`srem(key, value)`**
+  Removes a value from a set.
+
+---
+
+### 📃 List Commands
+
+- **`lpush(key, value)`**
+  Prepends value to a list.
+
+- **`rpush(key, value)`**
+  Appends value to a list.
+
+- **`lpop(key)`**
+  Removes and returns first element.
+
+- **`rpop(key)`**
+  Removes and returns last element.
+
+- **`getList(key)`**
+  Returns all elements in the list.
+
+---
+
+### 🖥️ Server Commands
+
+- **`flush(confirm)`**
+  Clears all data. Pass `true` to confirm.
+
+- **`save()`**
+  Persists data to disk.
+
+- **`load()`**
+  Loads data from disk.
+
+- **`quit()`**
+  Gracefully closes the server-side session.
+
+- **`help()`**
+  Returns a list of supported server commands.
+
+---
+
+## ⚠️ Error Handling & Resilience
+
+- Auto-reconnect is built-in.
+- If the connection drops, the client retries 5 times before giving up.
+- Token is preserved across reconnects if previously authenticated.
+- All methods return Promises — use `async/await` or `.then()`/`.catch()`.
+
+---
+
+## 🧪 Example with Full Flow
+
+```javascript
+await client.connect();
+
+await client.auth("sid");
+await client.token();
+
+await client.set("count", "1");
+console.log(await client.get("count")); // Output: "1"
+
+console.log("Stored token:", client.getStoredToken());
+
+client.close();
+```
+
+---
+
+## 📬 Contributing
+
+Contributions welcome! Open issues, suggest features, or submit PRs.
+
+---
+
+## 📄 License
 
 This project is licensed under the [MIT License](./LICENSE).
+
+---
