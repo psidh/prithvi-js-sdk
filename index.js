@@ -174,9 +174,9 @@ class PrithviClient {
   }
 
   async auth(username) {
-    const response = this._sendCommand(`AUTH ${username}`);
+    const response = await this._sendCommand(`AUTH ${username}`);
     if (response.startsWith("TOKEN ")) {
-      this.authToken = response.split(" ")[0];
+      this.authToken = response.split(" ")[1];
       return `Authentication successful. Token stored.`;
     } else {
       throw new Error(`Unexpected response: ${response}`);
