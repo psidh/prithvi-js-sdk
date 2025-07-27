@@ -168,7 +168,7 @@ class PrithviClient {
   }
 
   close() {
-    if (this.client && !this.client.destroyed()) {
+    if (this.client && !this.client.destroyed) {
       this.client.end();
     }
   }
